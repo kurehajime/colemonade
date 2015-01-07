@@ -2,7 +2,7 @@ require('./ai.js');
 var fs = require('fs');
 var deepExtend = require('deep-extend');
 var DEFAULT_PARAM = JSON.parse(fs.readFileSync('../data/default_param.json', 'utf8'));
-var MAX_TURN=99;
+var MAX_TURN=77;
 var MAP={   0:-1,10:-2,20:-3,30:-4,40:-5,50:-6,
                 1: 0,11:-8,21: 0,31: 0,41:-7,51: 0,
                 2: 0,12: 0,22: 0,32: 0,42: 0,52: 0,
@@ -41,6 +41,7 @@ function play(baseMap,blue_level,blue_param,red_level,red_palam){
         console.log(pL(count,2)+":"+rabel+pL(hand[0],2)+"->"+pL(hand[1],2)+"("+pL(map[hand[1]],2)+")")
         console.log(" ")
         printMap(map)
+        
         if(Aijs.isDraw(map)===true){
             end=0;  
             break;
@@ -66,7 +67,37 @@ function play(baseMap,blue_level,blue_param,red_level,red_palam){
     }
     return end;
 }
-
+//総当り
+function vs_all(paramArray,level,map){
+    var resultArray=new Array();
+    for(var i=0;i<paramArray.length;i++){
+        resultArray[i]=0;
+    }
+    for(var x=0;x<paramArray.length;x++){
+       for(var y=0;y<paramArray.length;y++){
+           if(x==y){
+                continue;   
+           }
+            var result=play(map,level,paramArray[x],level,paramArray[y]);
+            switch(result){
+                case 1:
+                    resultArray[x]=resultArray[x]+2;
+                    resultArray[y]=resultArray[y]-2;
+                    break;
+                case -1:
+                    resultArray[x]=resultArray[x]-2;
+                    resultArray[y]=resultArray[y]+2;
+                    break;
+                case 0:
+                    resultArray[x]=resultArray[x]-1;
+                    resultArray[y]=resultArray[y]-1;
+                    break;
+            }
+       }
+    }
+    return resultArray;
+}
+//パラメータ調整
 function shuffleParam(param,change_level,change_count){
     var new_param={};
     deepExtend(new_param, param);
@@ -78,14 +109,38 @@ function shuffleParam(param,change_level,change_count){
     }
     return new_param;
 }
-function printMap(map){
-    var MAP={   0:-1,10:-2,20:-3,30:-4,40:-5,50:-6,
+
+//盤面をシャッフル
+function shuffleBoard(){
+    var map={   0:-1,10:-2,20:-3,30:-4,40:-5,50:-6,
                 1: 0,11:-8,21: 0,31: 0,41:-7,51: 0,
                 2: 0,12: 0,22: 0,32: 0,42: 0,52: 0,
                 3: 0,13: 0,23: 0,33: 0,43: 0,53: 0,
                 4: 0,14: 7,24: 0,34: 0,44: 8,54: 0,
                 5: 6,15: 5,25: 4,35: 3,45: 2,55: 1,
-             }
+             }    //クリア
+    for(var num in map){
+        map[num]=0;   
+    }
+    var arr=[1,2,3,4,5,6,7,8];
+    var red_num=[0,10,20,30,40,50,11,41];
+    var blue_num=[55,45,35,25,15,5,44,14];
+    for(var i = arr.length-1; i >= 0; i--){
+      var r = Math.floor(Math.random()*(i+1)); 
+      var tmp = arr[i];
+      arr[i] = arr[r];
+      arr[r] = tmp;
+    }
+    for(var num in blue_num){
+        map[blue_num[num]]=arr[num];   
+    }
+    for(var num in red_num){
+        map[red_num[num]]=-1*arr[num];   
+    }
+    return map;
+}
+//マップを印字
+function printMap(map){
     console.log(pL(map[0],2)+pL(map[10],2)+pL(map[20],2)+pL(map[30],2)+pL(map[40],2)+pL(map[50],2));
     console.log(pL(map[1],2)+pL(map[11],2)+pL(map[21],2)+pL(map[31],2)+pL(map[41],2)+pL(map[51],2));
     console.log(pL(map[2],2)+pL(map[12],2)+pL(map[22],2)+pL(map[32],2)+pL(map[42],2)+pL(map[52],2));
@@ -93,7 +148,7 @@ function printMap(map){
     console.log(pL(map[4],2)+pL(map[14],2)+pL(map[24],2)+pL(map[34],2)+pL(map[44],2)+pL(map[54],2));
     console.log(pL(map[5],2)+pL(map[15],2)+pL(map[25],2)+pL(map[35],2)+pL(map[45],2)+pL(map[55],2));
 }
-                
+//左をスペースで詰める。     
 function pL(val,n){
 	var leftval = "";
 	for(;leftval.length < n;leftval+=' ');
@@ -105,8 +160,8 @@ function pL(val,n){
 function main(){
     var param1=shuffleParam(DEFAULT_PARAM,5,10);
     var param2=shuffleParam(DEFAULT_PARAM,5,10);
-    
-    play(MAP,2,param1,2,param2);       
+    var result=vs_all([param1,param2],2,shuffleBoard());
+    console.log(result);
 }
 
 

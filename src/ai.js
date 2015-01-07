@@ -181,12 +181,12 @@
         if(wkMap[30]>0){sum1+=wkMap[30];}
         if(wkMap[40]>0){sum1+=wkMap[40];}
         if(wkMap[50]>0){sum1+=wkMap[50];}
-        if(wkMap[5]*-1>0){sum2+=wkMap[5];}
-        if(wkMap[15]*-1>0){sum2+=wkMap[15];}
-        if(wkMap[25]*-1>0){sum2+=wkMap[25];}
-        if(wkMap[35]*-1>0){sum2+=wkMap[35];}
-        if(wkMap[45]*-1>0){sum2+=wkMap[45];}
-        if(wkMap[55]*-1>0){sum2+=wkMap[55];}
+        if(wkMap[5]*-1>0){sum2-=wkMap[5];}
+        if(wkMap[15]*-1>0){sum2-=wkMap[15];}
+        if(wkMap[25]*-1>0){sum2-=wkMap[25];}
+        if(wkMap[35]*-1>0){sum2-=wkMap[35];}
+        if(wkMap[45]*-1>0){sum2-=wkMap[45];}
+        if(wkMap[55]*-1>0){sum2-=wkMap[55];}
         if(sum1===sum2){
             return true  ;
         }else{
