@@ -6,6 +6,7 @@ var MAX_TURN=50;
 var WIN_POINT=2;//勝った時の点数
 var LOSE_POINT=-2;//負けた時の点数
 var DRAW_POINT=-1;//引き分けの時の点数
+var SET_COUNT=3;//試行回数
 
 var MAP={   0:-1,10:-2,20:-3,30:-4,40:-5,50:-6,
                 1: 0,11:-8,21: 0,31: 0,41:-7,51: 0,
@@ -121,8 +122,25 @@ function shuffleParam(param,change_level,change_count){
     for(var i=0;i<=change_count;i++){
         var piece =Math.round(Math.random()*7)+1;
         var rank  =Math.round(Math.random()*5);
-        var change=((Math.random()*10-5)*change_level)/100;
-        new_param[piece][rank]+=Math.round(new_param[piece][rank]*change);
+        var change=((Math.random()-0.5)*2*change_level)/100;
+        var p=new_param[piece][rank]+Math.round(new_param[piece][rank]*change);     
+        if(rank===5){
+            if(p<new_param[piece][rank-1]){
+                p=new_param[piece][rank-1]+1;
+            }
+        }else if(rank===0){
+            if(p>new_param[piece][rank+1]){
+                p=new_param[piece][rank+1]-1;
+            }
+        }else{
+            if(p<new_param[piece][rank-1]){
+                p=new_param[piece][rank-1]+1;
+            }
+            if(p>new_param[piece][rank+1]){
+                p=new_param[piece][rank+1]-1;
+            }
+        }
+        new_param[piece][rank]=p;
     }
     return new_param;
 }
@@ -203,13 +221,30 @@ function pL(val,n){
 * メイン関数。
 ***/
 function main(){
-    var param1=shuffleParam(DEFAULT_PARAM,5,10);
-    var param2=shuffleParam(DEFAULT_PARAM,10,20);
-    var param3=shuffleParam(DEFAULT_PARAM,15,30);
-
-    var result=vs_all([param1,param2,param3],2,shuffleBoard());
+    
+    //ベタ書き。あとでちゃんと書く。
+    
+    tes();return;
+    var result;
+    var paramArray=[DEFAULT_PARAM,
+                    shuffleParam(DEFAULT_PARAM,3,10),
+                    shuffleParam(DEFAULT_PARAM,3,10),
+                    shuffleParam(DEFAULT_PARAM,3,10),
+                    shuffleParam(DEFAULT_PARAM,3,10)
+                    ];
+    
+    for(var i=0;i<SET_COUNT;i++){
+        var result=vs_all(paramArray,2,shuffleBoard());
+        paramArray[0]=result[0];
+        paramArray[1]=result[1];
+        paramArray[2]=shuffleParam(result[0],3,10);
+        paramArray[3]=shuffleParam(result[0],3,10);
+        paramArray[4]=shuffleParam(result[0],5,10);
+    }
+    
     console.log(result);
 }
+
 
 
 main();
