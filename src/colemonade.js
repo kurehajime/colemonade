@@ -2,7 +2,11 @@ require('./ai.js');
 var fs = require('fs');
 var deepExtend = require('deep-extend');
 var DEFAULT_PARAM = JSON.parse(fs.readFileSync('../data/default_param.json', 'utf8'));
-var MAX_TURN=77;
+var MAX_TURN=50;
+var WIN_POINT=2;//勝った時の点数
+var LOSE_POINT=-2;//負けた時の点数
+var DRAW_POINT=-1;//引き分けの時の点数
+
 var MAP={   0:-1,10:-2,20:-3,30:-4,40:-5,50:-6,
                 1: 0,11:-8,21: 0,31: 0,41:-7,51: 0,
                 2: 0,12: 0,22: 0,32: 0,42: 0,52: 0,
@@ -31,7 +35,7 @@ function play(baseMap,blue_level,blue_param,red_level,red_palam){
         
         count+=1;
         if(count>MAX_TURN){
-            end=0;  
+            end=calcScore(map);//勝負がつかない場合はその時点での点数で決着;  
             break;
         }
         hand=Aijs.thinkAI(map,turn_player,level,undefined,undefined,param)[0];
@@ -43,7 +47,7 @@ function play(baseMap,blue_level,blue_param,red_level,red_palam){
         printMap(map)
         
         if(Aijs.isDraw(map)===true){
-            end=0;  
+            end=0;
             break;
         }
         end=Aijs.isEndX(map,true);
@@ -67,9 +71,12 @@ function play(baseMap,blue_level,blue_param,red_level,red_palam){
     }
     return end;
 }
-//総当り
+//総当りして勝ち点順に並び替え
 function vs_all(paramArray,level,map){
     var resultArray=new Array();
+    var resultParamArray=new Array();
+    var returnArray=new Array();
+
     for(var i=0;i<paramArray.length;i++){
         resultArray[i]=0;
     }
@@ -78,24 +85,34 @@ function vs_all(paramArray,level,map){
            if(x==y){
                 continue;   
            }
+           
             var result=play(map,level,paramArray[x],level,paramArray[y]);
             switch(result){
                 case 1:
-                    resultArray[x]=resultArray[x]+2;
-                    resultArray[y]=resultArray[y]-2;
+                    resultArray[x]=resultArray[x]+WIN_POINT;
+                    resultArray[y]=resultArray[y]+LOSE_POINT;
                     break;
                 case -1:
-                    resultArray[x]=resultArray[x]-2;
-                    resultArray[y]=resultArray[y]+2;
+                    resultArray[x]=resultArray[x]+LOSE_POINT;
+                    resultArray[y]=resultArray[y]+WIN_POINT;
                     break;
                 case 0:
-                    resultArray[x]=resultArray[x]-1;
-                    resultArray[y]=resultArray[y]-1;
+                    resultArray[x]=resultArray[x]+DRAW_POINT;
+                    resultArray[y]=resultArray[y]+DRAW_POINT;
                     break;
             }
        }
     }
-    return resultArray;
+    for(var i=0;i<paramArray.length;i++){
+        resultParamArray[i]=[paramArray[i],resultArray[i]];   
+    }
+    resultParamArray.sort(function(a,b){
+        return b[1]-a[1];
+    })
+    for(var i=0;i<resultParamArray.length;i++){
+        returnArray[i]=resultParamArray[i][0];
+    }
+    return returnArray;
 }
 //パラメータ調整
 function shuffleParam(param,change_level,change_count){
@@ -118,7 +135,8 @@ function shuffleBoard(){
                 3: 0,13: 0,23: 0,33: 0,43: 0,53: 0,
                 4: 0,14: 7,24: 0,34: 0,44: 8,54: 0,
                 5: 6,15: 5,25: 4,35: 3,45: 2,55: 1,
-             }    //クリア
+             }    
+    //クリア
     for(var num in map){
         map[num]=0;   
     }
@@ -138,6 +156,33 @@ function shuffleBoard(){
         map[red_num[num]]=-1*arr[num];   
     }
     return map;
+}
+//判定による決着
+function calcScore(map){
+    var sum1=0;
+    var sum2=0;
+    var GoalTop=[0,10,20,30,40,50];
+    var GoalBottom=[5,15,25,35,45,55]; 
+    //点数勝利        
+    for(var i in GoalTop){
+        if(map[GoalTop[i]]*1>0){
+            sum1+=map[GoalTop[i]];
+        }
+    }
+    for(var i in GoalBottom){
+        if(map[GoalBottom[i]]*-1>0){
+            sum2+=map[GoalBottom[i]];
+        }
+    }
+
+    if(Math.abs(sum1)>Math.abs(sum2)){
+        winner= 1;
+    }else if(Math.abs(sum1)<Math.abs(sum2)){
+        winner= -1;
+    }else if(Math.abs(sum1)==Math.abs(sum2)){
+        winner=0;
+    }
+    return winner;
 }
 //マップを印字
 function printMap(map){
@@ -159,8 +204,10 @@ function pL(val,n){
 ***/
 function main(){
     var param1=shuffleParam(DEFAULT_PARAM,5,10);
-    var param2=shuffleParam(DEFAULT_PARAM,5,10);
-    var result=vs_all([param1,param2],2,shuffleBoard());
+    var param2=shuffleParam(DEFAULT_PARAM,10,20);
+    var param3=shuffleParam(DEFAULT_PARAM,15,30);
+
+    var result=vs_all([param1,param2,param3],2,shuffleBoard());
     console.log(result);
 }
 
